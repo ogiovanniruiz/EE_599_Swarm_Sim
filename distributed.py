@@ -106,8 +106,14 @@ class Swarm_Simulation:
                 for j in range(N):
 
                         self.phi_obj[i,j] = math.atan2(self.O[1,j] - self.P[1,i] , self.O[0,j] - self.P[0,i]) - self.Rn[i]
+
                         self.U_obj[:,i] = [np.linalg.norm(self.O[:, j] - self.Pn[:, i] ) * math.cos(self.phi_obj[i,j]) * w_obj[i,j],
                                        np.linalg.norm(self.O[:, j] - self.Pn[:, i] ) * math.sin(self.phi_obj[i,j]) * w_obj[i,j]]
+
+                        if w_obj[i,j] != 0:
+                            self.leader[i] = 0
+                        else:
+                            self.leader[i] = 1
 
                         # Inter Robot i's angle input
                         self.phi[i,j] = math.atan2(self.P[1,j] - self.P[1,i], self.P[0,j] - self.P[0,i]) - self.Rn[i] 
@@ -140,7 +146,7 @@ class Swarm_Simulation:
                         self.delta_V = int(0.5*V.sum() - self.V_prev)
                     
                         if self.state != 0:
-                            #pygame.draw.aaline(self.screen, red, self.target[:], self.P[:,self.minimum], 1)
+                            pygame.draw.aaline(self.screen, red, self.target[:], self.P[:,self.minimum], 1)
                             pygame.draw.rect(self.screen,white,(self.target[0] - 25,self.target[1] - 25,50,50), 1)
 
             self.R_obj = self.Rn_obj
@@ -242,7 +248,7 @@ class Swarm_Simulation:
                             #If the energy is falling, non-connected bots are connected.
                             if (self.delta_V <= 0):
                                 
-                                #pygame.draw.aaline(self.screen, red, self.P[:, i], self.P[:, j], 1)
+                                pygame.draw.aaline(self.screen, red, self.P[:, i], self.P[:, j], 1)
                                 W[i, j] = K * (1 -  ((N*self.m)/(self.d))*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
                                 V[i, j] = 0.5 * K * (np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - ((N*self.m)/(self.d))* self.min) ** 2
 
@@ -272,7 +278,7 @@ class Swarm_Simulation:
 
                     #Connected bots are assigned weights and energies.
                     else:
-                        #pygame.draw.aaline(self.screen, blue, self.P[:, i], self.P[:, j], 1)
+                        pygame.draw.aaline(self.screen, blue, self.P[:, i], self.P[:, j], 1)
                         W[i, j] = K * (1 - A[i,j] * self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
                         V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - A[i,j]* self.min) ** 2
 
@@ -287,12 +293,12 @@ class Swarm_Simulation:
                     #Obstacle Avoidance Condition:
                     if np.linalg.norm(self.O[:,j] - self.Pn[:,i]) >= (3*obj_radius):
 
-                        self.leader[i] = 1
+                        #self.leader[i] = 1
                         w_obj[i,j] = 0
 
                     elif np.linalg.norm(self.O[:,j] - self.Pn[:,i]) < (3*obj_radius):
 
-                        self.leader[i] = 0
+                        #self.leader[i] = 0
 
                         for k in range(N):
                             if A[i,k] != 1:
@@ -302,9 +308,9 @@ class Swarm_Simulation:
                                 pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, k], 2)
                                 pygame.draw.aaline(self.screen, black, self.P[:, k], self.P[:, i], 2)
 
-                        w_obj[i,j] = K * (1 - (3*obj_radius) / np.linalg.norm(self.O[:, j] - self.Pn[:, i]))
+                        w_obj[i,j] = K *(1 - (3*obj_radius) / np.linalg.norm(self.O[:, j] - self.Pn[:, i]))
 
-                        #pygame.draw.aaline(self.screen, red, self.P[:, i], self.O[:, j], 1)
+                        pygame.draw.aaline(self.screen, red, self.P[:, i], self.O[:, j], 1)
                         
                     # Obstacles are drawn
                     pygame.draw.circle(self.screen, white, [int(self.O[0, j]), int(self.O[1, j])], obj_radius, 1)
