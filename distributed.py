@@ -15,7 +15,7 @@ black = [0, 0, 0]
 SCREENSIZE = [800, 800]  # Size of our output display
 
 running = True
-connections = False
+connections = True
 
 N = 8 #Number of Robots
 O = N #number of obstacles
@@ -266,7 +266,7 @@ class Swarm_Simulation:
                     self.O[:,i] = [SCREENSIZE[0]*0.6, 100*i + SCREENSIZE[1]*0.3]
 
                 self.state = 2
-                self.target = [SCREENSIZE[0] * 0.25, SCREENSIZE[1]*0.5]
+                self.target = [SCREENSIZE[0] * 0.05, SCREENSIZE[1]*0.5]
 
             elif (np.linalg.norm(self.target[:] - self.Pn[:, self.minimum]) <= 25 and self.state == 2):
 
@@ -296,7 +296,7 @@ class Swarm_Simulation:
                 for j in range(O):
                     
                     #Obstacle Avoidance Condition:
-                    if np.linalg.norm(self.O[:,j] - self.Pn[:,i]) < (self.dynamic[i] + 3*obj_radius):
+                    if np.linalg.norm(self.O[:,j] - self.Pn[:,i]) <= (self.dynamic[i] + 3*obj_radius):
 
                         self.dynamic[i] += 5
 
