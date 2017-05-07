@@ -19,15 +19,13 @@ black = [0, 0, 0]
 SCREENSIZE = [800, 800]  # Size of our output display
 
 running = True
-connections = False
+connections = True
 
 N = 8 #Number of Robots
-O = N #number of obstacles
-bot_radius = 1
-obj_radius = 10
+O = 8 #number of obstacles
+bot_radius = 3
+obj_radius = 15
 Dim = 2  #Dimension of search space
-count = 0
-
 
 W = np.zeros((N, N), dtype=np.float) # The Swarm Weights Matrix
 V = np.zeros((N, N), dtype=np.float) # The Swarm Energy Matrix
@@ -35,13 +33,10 @@ A = np.zeros((N, N), dtype=np.float) # The Swarm Adjacency Matrix
 w_obj = np.zeros((N,O), dtype=np.float)
 v_obj = np.zeros((N,O), dtype=np.float)
 v_target = np.zeros((N), dtype=np.float)
-
 K = 500
-
-K_obj = 5000
+K_obj = 500
 
 E = []
-
 
 class Swarm_Simulation:
     def __init__(self):
@@ -49,7 +44,7 @@ class Swarm_Simulation:
         pygame.init()
         self.screen = pygame.display.set_mode(SCREENSIZE)
         self.screen.fill(white)
-        pygame.display.set_caption("Distributed Simulation")
+        pygame.display.set_caption("Rendezvous Simulation")
 
         self.myfont = pygame.font.SysFont("arial", 25)
 
@@ -57,19 +52,6 @@ class Swarm_Simulation:
 
         self.P = SCREENSIZE[1] * np.random.rand(Dim, N)  # Initial positions of robots in the search space.
         self.Pn = np.zeros((Dim, N), dtype=np.int) # The updated postions are initialized.
-
-        self.R = np.random.rand(N)  # Initial rotation of robots in 2 pi radians.
-        self.Rn = np.zeros((N), dtype=np.float) # The updated rotations are initialized.
-        
-        self.phi = np.zeros((N,N), dtype=np.float) #Input angles to robot controllers.
-        self.phi_obj = np.zeros((N,O), dtype=np.float) #Input angles to robot controllers.
-        self.phi_target = np.zeros((N), dtype=np.float)
-
-        self.U_target = np.zeros((Dim, N), dtype=np.int) #Input desired movement direction for controllers.
-        self.U_obj = np.zeros((Dim, N), dtype=np.int)
-        self.U_bot = np.zeros((Dim, N), dtype=np.int)
-        
-        self.s = np.zeros((N), dtype=np.float) #Desired speeds of each robot.
 
         self.min = 50 #The target inter-robot distances.
 
@@ -105,75 +87,30 @@ class Swarm_Simulation:
 
         self.num_collisions = 0
 
-        self.count = 0
-
-
     def Run(self):
 
         while(running):
-
-            self.count += 1
-
-            if (self.count % 2 == 0):
-
-                print self.count
              
-            #self.screen.fill(white)
+            self.screen.fill(white)
 
             #The intial energy of the system.
             self.V_prev = 0.5*V.sum()
 
             #The positions and orientations of all bots are updated.
-            self.Pn = self.P 
-            self.Rn = self.R
+            self.Pn = self.P
 
             sim.bot_weights()
-
-            sim.test_cases()
 
             sim.obj_weights()
 
             for i in range(N):
                 for j in range(N):
 
-                        self.phi_target[i] = math.atan2(self.target[1] - self.P[1,i] , self.target[0] - self.P[0,i]) - self.Rn[i]
-
-                        self.U_target[:,i] = [np.linalg.norm(self.target[:] - self.Pn[:, i] ) * math.cos(self.phi_target[i])*v_target[i],
-                                              np.linalg.norm(self.target[:] - self.Pn[:, i] ) * math.sin(self.phi_target[i])*v_target[i]]
-
-                        #===========================================================================================================
-
-                        self.phi_obj[i,j] = math.atan2(self.O[1,j] - self.P[1,i] , self.O[0,j] - self.P[0,i]) - self.Rn[i]
-
-                        self.U_obj[:,i] = [np.linalg.norm(self.O[:, j] - self.Pn[:, i] ) * math.cos(self.phi_obj[i,j]) * w_obj[i,j],
-                                           np.linalg.norm(self.O[:, j] - self.Pn[:, i] ) * math.sin(self.phi_obj[i,j]) * w_obj[i,j]]
-
-                        #=============================================================================================================
-
-                        # Inter Robot i's angle input
-                        self.phi[i,j] = math.atan2(self.P[1,j] - self.P[1,i], self.P[0,j] - self.P[0,i]) - self.Rn[i] 
-                        self.phi[i,i] = 0
-                
-                        # Inter robot Rotation is calculated
-                        self.U_bot[:, i] = [np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) * math.cos(self.phi[i,j])*W[i,j]
-                                           ,np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) * math.sin(self.phi[i,j])*W[i,j]]
-
-
-                        self.Rn[i] = self.Rn[i] + math.atan2(self.U_bot[1, i], self.U_bot[0, i]) + math.atan2(self.U_target[1, i], self.U_target[0, i]) * self.move * 0.5 + math.atan2(self.U_obj[1, i], self.U_obj[0, i])
-
-                        # Speeds are calculated based on the energy of neighbors
-                        self.s[i] = V[i].sum() + v_obj[i].sum() +  v_target[i] * self.move * 0.5
-
-
-                        #Speeds are capped.
-                        if self.s[i] > 40000:
-                            self.s[i] = 40000
- 
                         # Bot positions are updated.
-                        self.Pn[0, i] = self.Pn[0, i] + self.s[i] * math.cos(self.Rn[i]) * 0.00001
-                        self.Pn[1, i] = self.Pn[1, i] + self.s[i] * math.sin(self.Rn[i]) * 0.00001
+                        self.Pn[:, i] = self.Pn[:, i] + (self.P[:, j] - self.P[:, i]) * 0.00001 * W[i,j] + self.move * (self.target[:] - self.P[:,self.minimum]) * 0.0005 + (self.O[:,j] - self.Pn[:,i])* w_obj[i,j] *0.001
 
                         self.O[1, i] = self.O[1,i] + self.obstacle_speeds * (random.random() - 0.5)
+                        
 
                         if self.dynamic_obstacles:
                             
@@ -187,33 +124,32 @@ class Swarm_Simulation:
                         else:
 
                             self.obstacle_speeds = 0
-
+                            
                         # Bots are drawn
+                        pygame.draw.circle(self.screen, black, [int(self.Pn[0, i]), int(self.Pn[1, i])], bot_radius, 1)
 
-                        if (self.count % 8 == 0):
-                            pygame.draw.circle(self.screen, black, [int(self.Pn[0, i]), int(self.Pn[1, i])], bot_radius, 1)
-
-                        #Change in energy is calculated
                         self.delta_V = int(0.5*V.sum() - self.V_prev)
+                        
                     
                         if self.state != 0:
-                            if connections:
-                                pygame.draw.aaline(self.screen, red, self.target[:], self.P[:,self.minimum], 1)
+                            #if connections:
+                                #pygame.draw.aaline(self.screen, red, self.target[:], self.P[:,self.minimum], 1)
                             self.move = 1
                             
                             pygame.draw.rect(self.screen,black,(self.target[0] - 25,self.target[1] - 25,50,50), 1)
                         else:
                             self.move = 0
 
-                        
-            self.R = self.Rn
             self.P = self.Pn
 
+            sim.test_cases()
+            
             pygame.display.update()
 
             E.append(0.5*V.sum())
-         
+                   
             pygame.event.clear()
+
 
     def bot_weights(self):
 
@@ -256,7 +192,7 @@ class Swarm_Simulation:
                         if np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) < ((N*self.a)/(self.b))*self.min:
 
                             #If the energy is falling, non-connected bots are connected.
-                            if (self.delta_V <= 0):
+                            if (self.delta_V < 0):
                                 if connections:
                                     pygame.draw.aaline(self.screen, red, self.P[:, i], self.P[:, j], 1)
                                 W[i, j] = K * (1 -  ((N*self.a)/(self.b))*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
@@ -267,17 +203,17 @@ class Swarm_Simulation:
                             #if the energy increases the spacing between bots decreases and a counter is increased.
                             else:
                             
-                                self.b += 0.01
+                                self.b += 0.1
                                 self.counter += 1
 
                                 #If the counter hits a threshold, the counter and spacing divider is reset and the spacing multiplier increaes.
-                                if self.counter > 1500:
+                                if self.counter > 150:
                                     self.b = 1.0
                                     self.counter = 0
                                     self.a += 1
 
                                     #Space multiplier is capped
-                                    if self.a > 4:
+                                    if self.a > 10:
                                         self.a = 1
                                 
                                 W[i, j] = 0
@@ -292,14 +228,12 @@ class Swarm_Simulation:
                             A[i,j] = -1
 
 
-
     def test_cases(self):
         
             for i in range (N):
                 self.dist_0[i] = np.linalg.norm(self.target[:] - self.Pn[:, i])
                 self.dist_1[i] = np.linalg.norm(self.target[:] - self.Pn[:, i])
-                v_target[i] = np.linalg.norm(self.target[:] - self.Pn[:, i])
-                
+                    
             self.minimum = int(np.where(self.dist_0 == self.dist_0.min())[0])
 
             self.maximum = int(np.where(self.dist_1 == self.dist_1.max())[0])
@@ -317,7 +251,6 @@ class Swarm_Simulation:
                 plt.ylabel('Total Energy')
                 plt.xlabel('Time Steps')
                 plt.show()
-                
 
             elif (np.linalg.norm(self.target[:] - self.Pn[:, self.minimum]) <= 25 and self.state == 1):
 
@@ -329,8 +262,8 @@ class Swarm_Simulation:
 
                 self.state = 2
                 self.target = [SCREENSIZE[0] * 0.05, SCREENSIZE[1]*0.5]
+
                 print self.num_collisions
-                
 
             elif (np.linalg.norm(self.target[:] - self.Pn[:, self.minimum]) <= 25 and self.state == 2):
 
@@ -342,6 +275,7 @@ class Swarm_Simulation:
 
                 self.dynamic_obstacles = True
                 self.obstacle_speeds = 1.0
+
                 print self.num_collisions
 
             elif (np.linalg.norm(self.target[:] - self.Pn[:, self.minimum]) <= 25 and self.state == 3):
@@ -351,13 +285,17 @@ class Swarm_Simulation:
 
                 self.dynamic_obstacles = True
                 self.obstacle_speeds = 1.0
+
                 print self.num_collisions
 
             elif (np.linalg.norm(self.target[:] - self.Pn[:, self.minimum]) <= 25 and self.state == 4):
                 self.state = 0
+
                 self.dynamic_obstacles = False
                 self.O = SCREENSIZE[0] * np.random.rand(Dim, O)
                 self.U_obj = np.zeros((Dim, N), dtype=np.int)
+
+
 
 
 
@@ -369,14 +307,12 @@ class Swarm_Simulation:
                 for j in range(O):
                     
                     #Obstacle Avoidance Condition:
-                    if np.linalg.norm(self.O[:,j] - self.Pn[:,i]) < (self.dynamic[i] + 3*obj_radius):
+                    if np.linalg.norm(self.O[:,j] - self.Pn[:,i]) <= (self.dynamic[i] + 3*obj_radius):
 
                         if np.linalg.norm(self.O[:,j] - self.Pn[:,i]) <= (obj_radius):
                             self.num_collisions += 1
 
-                        self.dynamic[i] += 10
-
-                        v_target[i] = 0
+                        self.dynamic[i] += 5
 
                         if self.dynamic[i] > 50:
                             self.dynamic[i] = 50
@@ -386,39 +322,28 @@ class Swarm_Simulation:
 
                                 W[i,k] = 0
                                 W[k,i] = 0
-                                pygame.draw.aaline(self.screen, white, self.P[:, i], self.P[:, k], 2)
-                                pygame.draw.aaline(self.screen, white, self.P[:, k], self.P[:, i], 2)
+                                pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, k], 2)
+                                pygame.draw.aaline(self.screen, black, self.P[:, k], self.P[:, i], 2)
+                                
 
-                            elif A[i,k] == 1:
-
-                                if np.linalg.norm(self.O[:,j] - self.Pn[:,i]) <= (obj_radius):
-
-                                    W[i,k] = 0
-                                    W[k,i] = 0
-                                    pygame.draw.aaline(self.screen, white, self.P[:, i], self.P[:, k], 2)
-                                    pygame.draw.aaline(self.screen, white, self.P[:, k], self.P[:, i], 2)
-
-                        w_obj[i,j] = K_obj * self.dynamic[i] * (1 - (self.dynamic[i] + 5*obj_radius) / np.linalg.norm(self.O[:, j] - self.Pn[:, i]))
-                        w_obj[j,i] = K_obj * self.dynamic[i] * (1 - (self.dynamic[i] + 5*obj_radius) / np.linalg.norm(self.O[:, j] - self.Pn[:, i]))
-                        v_obj[i,j] = 0.5 * self.dynamic[i] * K_obj * (np.linalg.norm(self.O[:, j] - self.Pn[:, i]) - (self.dynamic[i] + 5*obj_radius))**2
-                        v_obj[j,i] = 0.5 * self.dynamic[i] * K_obj * (np.linalg.norm(self.O[:, j] - self.Pn[:, i]) - (self.dynamic[i] + 5*obj_radius))**2
+                        w_obj[i,j] = K_obj *(1 - (self.dynamic[i] + 3*obj_radius) / np.linalg.norm(self.O[:, j] - self.Pn[:, i]))
+                        v_obj[i,j] = 0.5*K_obj*(np.linalg.norm(self.O[:, j] - self.Pn[:, i]) - (self.dynamic[i] + 3*obj_radius))**2
 
                         if connections:
                             pygame.draw.aaline(self.screen, red, self.P[:, i], self.O[:, j], 1)
 
                     else:
-                        self.dynamic[i] -= 5
-
+                        self.dynamic[i] -= 1
                         if self.dynamic[i] < 0:
                             self.dynamic[i] = 0
 
                         w_obj[i,j] = 0
-                        w_obj[j,i] = 0
                         v_obj[i,j] = 0
-                        v_obj[j,i] = 0
 
                     # Obstacles are drawn
                     pygame.draw.circle(self.screen, black, [int(self.O[0, j]), int(self.O[1, j])], obj_radius, 1)
+        
+
         
         
     
