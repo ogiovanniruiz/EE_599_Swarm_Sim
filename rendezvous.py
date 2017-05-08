@@ -24,7 +24,7 @@ connections = True
 N = 8 #Number of Robots
 O = 8 #number of obstacles
 bot_radius = 3
-obj_radius = 15
+obj_radius = 10
 Dim = 2  #Dimension of search space
 
 W = np.zeros((N, N), dtype=np.float) # The Swarm Weights Matrix
@@ -101,6 +101,8 @@ class Swarm_Simulation:
 
             sim.bot_weights()
 
+            sim.test_cases()
+
             sim.obj_weights()
 
             for i in range(N):
@@ -142,11 +144,12 @@ class Swarm_Simulation:
 
             self.P = self.Pn
 
-            sim.test_cases()
+            
             
             pygame.display.update()
 
-            E.append(0.5*V.sum())
+            if self.state == 3:
+                E.append(0.5*V.sum())
                    
             pygame.event.clear()
 
@@ -187,7 +190,7 @@ class Swarm_Simulation:
                     V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - C * self.min) ** 2
 
                 else:
-                        A[i,j] = -1
+                        #A[i,j] = -1
                         #Non connected bots that get close together considered here.
                         if np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) < ((N*self.a)/(self.b))*self.min:
 
@@ -203,17 +206,17 @@ class Swarm_Simulation:
                             #if the energy increases the spacing between bots decreases and a counter is increased.
                             else:
                             
-                                self.b += 0.1
+                                self.b += 0.01
                                 self.counter += 1
 
                                 #If the counter hits a threshold, the counter and spacing divider is reset and the spacing multiplier increaes.
-                                if self.counter > 150:
+                                if self.counter > 1500:
                                     self.b = 1.0
                                     self.counter = 0
                                     self.a += 1
 
                                     #Space multiplier is capped
-                                    if self.a > 10:
+                                    if self.a > 4:
                                         self.a = 1
                                 
                                 W[i, j] = 0
@@ -247,10 +250,6 @@ class Swarm_Simulation:
                 for i in range(N):
                     self.O[:,i] = [SCREENSIZE[0]/2, 100*i]
 
-                plt.plot(E)
-                plt.ylabel('Total Energy')
-                plt.xlabel('Time Steps')
-                plt.show()
 
             elif (np.linalg.norm(self.target[:] - self.Pn[:, self.minimum]) <= 25 and self.state == 1):
 
@@ -276,6 +275,8 @@ class Swarm_Simulation:
                 self.dynamic_obstacles = True
                 self.obstacle_speeds = 1.0
 
+
+
                 print self.num_collisions
 
             elif (np.linalg.norm(self.target[:] - self.Pn[:, self.minimum]) <= 25 and self.state == 3):
@@ -285,6 +286,13 @@ class Swarm_Simulation:
 
                 self.dynamic_obstacles = True
                 self.obstacle_speeds = 1.0
+
+                plt.plot(E)
+                plt.ylabel('Total Energy')
+                plt.xlabel('Time Steps')
+                plt.title('Rendezvous')
+                plt.ticklabel_format(style='sci',axis='y',scilimits=(0,0))
+                plt.show()
 
                 print self.num_collisions
 
@@ -322,8 +330,8 @@ class Swarm_Simulation:
 
                                 W[i,k] = 0
                                 W[k,i] = 0
-                                pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, k], 2)
-                                pygame.draw.aaline(self.screen, black, self.P[:, k], self.P[:, i], 2)
+                                pygame.draw.aaline(self.screen, white, self.P[:, i], self.P[:, k], 4)
+                                pygame.draw.aaline(self.screen, white, self.P[:, k], self.P[:, i], 4)
                                 
 
                         w_obj[i,j] = K_obj *(1 - (self.dynamic[i] + 3*obj_radius) / np.linalg.norm(self.O[:, j] - self.Pn[:, i]))

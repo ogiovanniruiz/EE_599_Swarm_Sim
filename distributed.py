@@ -19,7 +19,7 @@ black = [0, 0, 0]
 SCREENSIZE = [800, 800]  # Size of our output display
 
 running = True
-connections = False
+connections = True
 
 N = 8 #Number of Robots
 O = N #number of obstacles
@@ -105,20 +105,13 @@ class Swarm_Simulation:
 
         self.num_collisions = 0
 
-        self.count = 0
-
 
     def Run(self):
 
         while(running):
 
-            self.count += 1
 
-            if (self.count % 2 == 0):
-
-                print self.count
-             
-            #self.screen.fill(white)
+            self.screen.fill(white)
 
             #The intial energy of the system.
             self.V_prev = 0.5*V.sum()
@@ -190,16 +183,16 @@ class Swarm_Simulation:
 
                         # Bots are drawn
 
-                        if (self.count % 8 == 0):
-                            pygame.draw.circle(self.screen, black, [int(self.Pn[0, i]), int(self.Pn[1, i])], bot_radius, 1)
+                        pygame.draw.circle(self.screen, black, [int(self.Pn[0, i]), int(self.Pn[1, i])], bot_radius, 1)
 
                         #Change in energy is calculated
                         self.delta_V = int(0.5*V.sum() - self.V_prev)
                     
                         if self.state != 0:
-                            if connections:
-                                pygame.draw.aaline(self.screen, red, self.target[:], self.P[:,self.minimum], 1)
+                            #if connections:
+                                #pygame.draw.aaline(self.screen, red, self.target[:], self.P[:,self.minimum], 1)
                             self.move = 1
+                            
                             
                             pygame.draw.rect(self.screen,black,(self.target[0] - 25,self.target[1] - 25,50,50), 1)
                         else:
@@ -211,7 +204,9 @@ class Swarm_Simulation:
 
             pygame.display.update()
 
-            E.append(0.5*V.sum())
+            
+            if self.state == 3:
+                E.append(0.5*V.sum())
          
             pygame.event.clear()
 
@@ -251,7 +246,7 @@ class Swarm_Simulation:
                     V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - C * self.min) ** 2
 
                 else:
-                        A[i,j] = -1
+                        #A[i,j] = -1
                         #Non connected bots that get close together considered here.
                         if np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) < ((N*self.a)/(self.b))*self.min:
 
@@ -313,10 +308,7 @@ class Swarm_Simulation:
                 for i in range(N):
                     self.O[:,i] = [SCREENSIZE[0]/2, 100*i]
 
-                plt.plot(E)
-                plt.ylabel('Total Energy')
-                plt.xlabel('Time Steps')
-                plt.show()
+                
                 
 
             elif (np.linalg.norm(self.target[:] - self.Pn[:, self.minimum]) <= 25 and self.state == 1):
@@ -329,6 +321,7 @@ class Swarm_Simulation:
 
                 self.state = 2
                 self.target = [SCREENSIZE[0] * 0.05, SCREENSIZE[1]*0.5]
+
                 print self.num_collisions
                 
 
@@ -342,6 +335,8 @@ class Swarm_Simulation:
 
                 self.dynamic_obstacles = True
                 self.obstacle_speeds = 1.0
+
+
                 print self.num_collisions
 
             elif (np.linalg.norm(self.target[:] - self.Pn[:, self.minimum]) <= 25 and self.state == 3):
@@ -349,8 +344,16 @@ class Swarm_Simulation:
                 self.state = 4
                 self.target = [SCREENSIZE[0] * 0.1, SCREENSIZE[1]*0.5]
 
+
+
                 self.dynamic_obstacles = True
                 self.obstacle_speeds = 1.0
+                plt.plot(E)
+                plt.ylabel('Total Energy')
+                plt.xlabel('Time Steps')
+                plt.title('Distributed')
+                plt.ticklabel_format(style='sci',axis='y',scilimits=(0,0))
+                plt.show()
                 print self.num_collisions
 
             elif (np.linalg.norm(self.target[:] - self.Pn[:, self.minimum]) <= 25 and self.state == 4):
