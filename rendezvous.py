@@ -19,11 +19,11 @@ black = [0, 0, 0]
 SCREENSIZE = [800, 800]  # Size of our output display
 
 running = True
-connections = True
+connections = False
 
 N = 8 #Number of Robots
 O = 8 #number of obstacles
-bot_radius = 3
+bot_radius = 1
 obj_radius = 10
 Dim = 2  #Dimension of search space
 
@@ -91,7 +91,7 @@ class Swarm_Simulation:
 
         while(running):
              
-            self.screen.fill(white)
+            #self.screen.fill(white)
 
             #The intial energy of the system.
             self.V_prev = 0.5*V.sum()
