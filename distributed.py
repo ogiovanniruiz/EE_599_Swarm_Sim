@@ -23,7 +23,7 @@ connections = True
 
 N = 8 #Number of Robots
 O = N #number of obstacles
-bot_radius = 1
+bot_radius = 3
 obj_radius = 10
 Dim = 2  #Dimension of search space
 count = 0

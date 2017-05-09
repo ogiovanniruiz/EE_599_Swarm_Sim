@@ -19,7 +19,7 @@ black = [0, 0, 0]
 SCREENSIZE = [800, 800]  # Size of our output display
 
 running = True
-connections = False
+connections = True
 
 N = 8 #Number of Robots
 O = 8 #number of obstacles
@@ -87,11 +87,13 @@ class Swarm_Simulation:
 
         self.num_collisions = 0
 
+        self.finish = 0
+
     def Run(self):
 
         while(running):
              
-            #self.screen.fill(white)
+            self.screen.fill(white)
 
             #The intial energy of the system.
             self.V_prev = 0.5*V.sum()
@@ -148,7 +150,7 @@ class Swarm_Simulation:
             
             pygame.display.update()
 
-            if self.state == 3:
+            if self.state == 0:
                 E.append(0.5*V.sum())
                    
             pygame.event.clear()
@@ -218,6 +220,14 @@ class Swarm_Simulation:
                                     #Space multiplier is capped
                                     if self.a > 4:
                                         self.a = 1
+                                        self.finish += 1
+                                        if self.finish > 4:
+                                            plt.plot(E)
+                                            plt.ylabel('Total Energy')
+                                            plt.xlabel('Time Steps')
+                                            #plt.title('Rendezvous')
+                                            plt.ticklabel_format(style='sci',axis='y',scilimits=(0,0))
+                                            plt.show()
                                 
                                 W[i, j] = 0
                                 V[i, j] = 0
@@ -249,6 +259,14 @@ class Swarm_Simulation:
                 self.target = [SCREENSIZE[0] * 0.75, SCREENSIZE[1]*0.5]
                 for i in range(N):
                     self.O[:,i] = [SCREENSIZE[0]/2, 100*i]
+
+                plt.plot(E)
+                plt.ylabel('Total Energy')
+                plt.xlabel('Time Steps')
+                plt.ticklabel_format(style='sci',axis='y',scilimits=(0,0))
+                plt.show()
+
+
 
 
             elif (np.linalg.norm(self.target[:] - self.Pn[:, self.minimum]) <= 25 and self.state == 1):
@@ -287,12 +305,7 @@ class Swarm_Simulation:
                 self.dynamic_obstacles = True
                 self.obstacle_speeds = 1.0
 
-                plt.plot(E)
-                plt.ylabel('Total Energy')
-                plt.xlabel('Time Steps')
-                plt.title('Rendezvous')
-                plt.ticklabel_format(style='sci',axis='y',scilimits=(0,0))
-                plt.show()
+
 
                 print self.num_collisions
 
