@@ -10,6 +10,10 @@ import matplotlib.pyplot as plt
 
 import random
 
+import time
+
+import csv
+
 red = [255, 0, 0]
 green = [0, 255, 0]
 blue = [0, 0, 255]
@@ -28,7 +32,6 @@ obj_radius = 10
 Dim = 2  #Dimension of search space
 count = 0
 
-
 W = np.zeros((N, N), dtype=np.float) # The Swarm Weights Matrix
 V = np.zeros((N, N), dtype=np.float) # The Swarm Energy Matrix
 A = np.zeros((N, N), dtype=np.float) # The Swarm Adjacency Matrix
@@ -40,8 +43,22 @@ K = 500
 
 K_obj = 5000
 
-E = []
+E_converge = []
+E_static = []
+E_dynamic = []
 
+t_converge = []
+t_static = []
+t_dynamic = []
+
+converge = open ('converge.csv', 'a')
+writer_converge = csv.writer(converge)
+
+static = open ('static.csv', 'a')
+writer_static = csv.writer(static)
+
+dynamic = open ('dynamic.csv', 'a')
+writer_dynamic = csv.writer(dynamic)
 
 class Swarm_Simulation:
     def __init__(self):
@@ -79,7 +96,7 @@ class Swarm_Simulation:
 
         self.b = 1.0 #A counter to reduce spacings for non-connected robots.
 
-        self.a = 1 #Spacer multiplier.
+        self.a = 1.0 #Spacer multiplier.
 
         self.counter = 0 #Counter increases whenever the energy begins to increases.
 
@@ -91,11 +108,7 @@ class Swarm_Simulation:
 
         self.dist_0 = np.zeros((N), dtype=np.float)
 
-        self.dist_1 = np.zeros((N), dtype=np.float)
-
         self.minimum = 0
-
-        self.maximum = 0
 
         self.move = 0
 
@@ -105,11 +118,15 @@ class Swarm_Simulation:
 
         self.num_collisions = 0
 
+        self.time_0 = time.time()
+
+        self.time_1 = 0
+
+        self.time_2 = 0
 
     def Run(self):
 
         while(running):
-
 
             self.screen.fill(white)
 
@@ -189,11 +206,7 @@ class Swarm_Simulation:
                         self.delta_V = int(0.5*V.sum() - self.V_prev)
                     
                         if self.state != 0:
-                            #if connections:
-                                #pygame.draw.aaline(self.screen, red, self.target[:], self.P[:,self.minimum], 1)
                             self.move = 1
-                            
-                            
                             pygame.draw.rect(self.screen,black,(self.target[0] - 25,self.target[1] - 25,50,50), 1)
                         else:
                             self.move = 0
@@ -204,9 +217,16 @@ class Swarm_Simulation:
 
             pygame.display.update()
 
-            
-            if self.state == 3:
-                E.append(0.5*V.sum())
+            if self.state == 0:
+                E_converge.append(0.5*V.sum())
+                t_converge.append(time.time() - self.time_0)
+            elif self.state == 2:
+                E_static.append(0.5*V.sum())
+                t_static.append(time.time() - self.time_1)
+
+            elif self.state == 3:
+                E_dynamic.append(0.5*V.sum())
+                t_dynamic.append(time.time() - self.time_2)
          
             pygame.event.clear()
 
@@ -221,6 +241,7 @@ class Swarm_Simulation:
                     #Diagonal Elements are not important for adjacency because they represent the robot's connections to itself.
                     W[i, j] = 0
                     A[i,j] = 0
+                    V[i,j] = 0
 
                 elif (i == j + 1) or (i == j - 1) or ((i == N - 1) and (j == 0)) or ((i == 0) and (j == N - 1)):
 
@@ -246,7 +267,6 @@ class Swarm_Simulation:
                     V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - C * self.min) ** 2
 
                 else:
-                        #A[i,j] = -1
                         #Non connected bots that get close together considered here.
                         if np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) < ((N*self.a)/(self.b))*self.min:
 
@@ -292,26 +312,28 @@ class Swarm_Simulation:
         
             for i in range (N):
                 self.dist_0[i] = np.linalg.norm(self.target[:] - self.Pn[:, i])
-                self.dist_1[i] = np.linalg.norm(self.target[:] - self.Pn[:, i])
                 v_target[i] = np.linalg.norm(self.target[:] - self.Pn[:, i])
                 
             self.minimum = int(np.where(self.dist_0 == self.dist_0.min())[0])
 
-            self.maximum = int(np.where(self.dist_1 == self.dist_1.max())[0])
-
-            
             #TEST 1 Convergence to any point:
             if (0.5*V.sum() < 15000 and self.state == 0):
                 
                 self.state = 1
                 self.target = [SCREENSIZE[0] * 0.75, SCREENSIZE[1]*0.5]
+
                 for i in range(N):
                     self.O[:,i] = [SCREENSIZE[0]/2, 100*i]
 
-                
-                
+                array_converge = [t_converge,E_converge]
+                for values in array_converge:
+                    writer_converge.writerow(values)
 
+                
             elif (np.linalg.norm(self.target[:] - self.Pn[:, self.minimum]) <= 25 and self.state == 1):
+
+                self.state = 2
+                self.target = [SCREENSIZE[0] * 0.05, SCREENSIZE[1]*0.5]
 
                 for i in range(N):
                     self.O[:,i] = [SCREENSIZE[0]*0.4, 100*i - SCREENSIZE[1]*0.2]
@@ -319,12 +341,8 @@ class Swarm_Simulation:
                 for i in range(4):
                     self.O[:,i] = [SCREENSIZE[0]*0.6, 100*i + SCREENSIZE[1]*0.3]
 
-                self.state = 2
-                self.target = [SCREENSIZE[0] * 0.05, SCREENSIZE[1]*0.5]
-
-                print self.num_collisions
-                
-
+                self.time_1 = time.time()
+  
             elif (np.linalg.norm(self.target[:] - self.Pn[:, self.minimum]) <= 25 and self.state == 2):
 
                 self.state = 3
@@ -336,25 +354,23 @@ class Swarm_Simulation:
                 self.dynamic_obstacles = True
                 self.obstacle_speeds = 1.0
 
+                array_static = [t_static,E_static]
+                for values in array_static:
+                    writer_static.writerow(values)
 
-                print self.num_collisions
+                self.time_2 = time.time()
 
             elif (np.linalg.norm(self.target[:] - self.Pn[:, self.minimum]) <= 25 and self.state == 3):
 
                 self.state = 4
                 self.target = [SCREENSIZE[0] * 0.1, SCREENSIZE[1]*0.5]
 
-
-
                 self.dynamic_obstacles = True
                 self.obstacle_speeds = 1.0
-                plt.plot(E)
-                plt.ylabel('Total Energy')
-                plt.xlabel('Time Steps')
-                plt.title('Distributed')
-                plt.ticklabel_format(style='sci',axis='y',scilimits=(0,0))
-                plt.show()
-                print self.num_collisions
+
+                array_dynamic = [t_dynamic,E_dynamic]
+                for values in array_dynamic:
+                    writer_dynamic.writerow(values)
 
             elif (np.linalg.norm(self.target[:] - self.Pn[:, self.minimum]) <= 25 and self.state == 4):
                 self.state = 0

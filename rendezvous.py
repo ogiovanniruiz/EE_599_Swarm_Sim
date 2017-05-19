@@ -10,6 +10,10 @@ import matplotlib.pyplot as plt
 
 import random
 
+import csv
+
+import time
+
 red = [255, 0, 0]
 green = [0, 255, 0]
 blue = [0, 0, 255]
@@ -36,7 +40,22 @@ v_target = np.zeros((N), dtype=np.float)
 K = 500
 K_obj = 500
 
-E = []
+E_converge = []
+E_static = []
+E_dynamic = []
+
+t_converge = []
+t_static = []
+t_dynamic = []
+
+converge = open ('converge.csv', 'w')
+writer_converge = csv.writer(converge)
+
+static = open ('static.csv', 'w')
+writer_static = csv.writer(static)
+
+dynamic = open ('dynamic.csv', 'w')
+writer_dynamic = csv.writer(dynamic)
 
 class Swarm_Simulation:
     def __init__(self):
@@ -88,6 +107,12 @@ class Swarm_Simulation:
         self.num_collisions = 0
 
         self.finish = 0
+
+        self.time_0 = time.time()
+
+        self.time_1 = 0
+
+        self.time_2 = 0
 
     def Run(self):
 
@@ -144,14 +169,20 @@ class Swarm_Simulation:
                         else:
                             self.move = 0
 
-            self.P = self.Pn
-
-            
+            self.P = self.Pn  
             
             pygame.display.update()
 
             if self.state == 0:
-                E.append(0.5*V.sum())
+                E_converge.append(0.5*V.sum())
+                t_converge.append(time.time() - self.time_0)
+            elif self.state == 2:
+                E_static.append(0.5*V.sum())
+                t_static.append(time.time() - self.time_1)
+
+            elif self.state == 3:
+                E_dynamic.append(0.5*V.sum())
+                t_dynamic.append(time.time() - self.time_2)
                    
             pygame.event.clear()
 
@@ -245,11 +276,9 @@ class Swarm_Simulation:
         
             for i in range (N):
                 self.dist_0[i] = np.linalg.norm(self.target[:] - self.Pn[:, i])
-                self.dist_1[i] = np.linalg.norm(self.target[:] - self.Pn[:, i])
                     
             self.minimum = int(np.where(self.dist_0 == self.dist_0.min())[0])
 
-            self.maximum = int(np.where(self.dist_1 == self.dist_1.max())[0])
 
             
             #TEST 1 Convergence to any point:
@@ -260,16 +289,14 @@ class Swarm_Simulation:
                 for i in range(N):
                     self.O[:,i] = [SCREENSIZE[0]/2, 100*i]
 
-                plt.plot(E)
-                plt.ylabel('Total Energy')
-                plt.xlabel('Time Steps')
-                plt.ticklabel_format(style='sci',axis='y',scilimits=(0,0))
-                plt.show()
-
-
-
+                array_converge = [t_converge,E_converge]
+                for values in array_converge:
+                    writer_converge.writerow(values)
 
             elif (np.linalg.norm(self.target[:] - self.Pn[:, self.minimum]) <= 25 and self.state == 1):
+
+                self.state = 2
+                self.target = [SCREENSIZE[0] * 0.05, SCREENSIZE[1]*0.5]
 
                 for i in range(N):
                     self.O[:,i] = [SCREENSIZE[0]*0.4, 100*i - SCREENSIZE[1]*0.2]
@@ -277,10 +304,7 @@ class Swarm_Simulation:
                 for i in range(4):
                     self.O[:,i] = [SCREENSIZE[0]*0.6, 100*i + SCREENSIZE[1]*0.3]
 
-                self.state = 2
-                self.target = [SCREENSIZE[0] * 0.05, SCREENSIZE[1]*0.5]
-
-                print self.num_collisions
+                self.time_1 = time.time()
 
             elif (np.linalg.norm(self.target[:] - self.Pn[:, self.minimum]) <= 25 and self.state == 2):
 
@@ -293,9 +317,11 @@ class Swarm_Simulation:
                 self.dynamic_obstacles = True
                 self.obstacle_speeds = 1.0
 
+                array_static = [t_static,E_static]
+                for values in array_static:
+                    writer_static.writerow(values)
 
-
-                print self.num_collisions
+                self.time_2 = time.time()
 
             elif (np.linalg.norm(self.target[:] - self.Pn[:, self.minimum]) <= 25 and self.state == 3):
 
@@ -305,9 +331,9 @@ class Swarm_Simulation:
                 self.dynamic_obstacles = True
                 self.obstacle_speeds = 1.0
 
-
-
-                print self.num_collisions
+                array_dynamic = [t_dynamic,E_dynamic]
+                for values in array_dynamic:
+                    writer_dynamic.writerow(values)
 
             elif (np.linalg.norm(self.target[:] - self.Pn[:, self.minimum]) <= 25 and self.state == 4):
                 self.state = 0
@@ -315,8 +341,6 @@ class Swarm_Simulation:
                 self.dynamic_obstacles = False
                 self.O = SCREENSIZE[0] * np.random.rand(Dim, O)
                 self.U_obj = np.zeros((Dim, N), dtype=np.int)
-
-
 
 
 

@@ -10,6 +10,8 @@ import matplotlib.pyplot as plt
 
 import random
 
+import time
+
 red = [255, 0, 0]
 green = [0, 255, 0]
 blue = [0, 0, 255]
@@ -19,7 +21,7 @@ black = [0, 0, 0]
 SCREENSIZE = [800, 800]  # Size of our output display
 
 running = True
-connections = False
+connections = True
 
 N = 8 #Number of Robots
 O = 8 #number of obstacles
@@ -48,8 +50,6 @@ class Swarm_Simulation:
 
         self.myfont = pygame.font.SysFont("arial", 25)
 
-        self.O = SCREENSIZE[0] * np.random.rand(Dim, O)# Obstacle Positions
-
         self.P = SCREENSIZE[1] * np.random.rand(Dim, N)  # Initial positions of robots in the search space.
         self.Pn = np.zeros((Dim, N), dtype=np.int) # The updated postions are initialized.
 
@@ -59,35 +59,11 @@ class Swarm_Simulation:
 
         self.delta_V = 0 # Change in energy of the system in one program loop.
 
-        self.b = 1.0 #A counter to reduce spacings for non-connected robots.
-
-        self.a = 1.0 #Spacer multiplier.
-
-        self.counter = 0 #Counter increases whenever the energy begins to increases.
-
-        self.dynamic = np.zeros((N), dtype=np.float)
-
-        self.dynamic_obstacles = False
-
-        self.obstacle_speeds = 0
-
-        self.dist_0 = np.zeros((N), dtype=np.float)
-
-        self.dist_1 = np.zeros((N), dtype=np.float)
-
-        self.minimum = 0
-
-        self.maximum = 0
-
-        self.move = 0
-
-        self.target = [0,0]
+        self.a = np.ones((N), dtype=np.float) #Spacer multiplier.
 
         self.state = 'A'
 
-        self.num_collisions = 0
-
-        self.finish = 0
+        self.start_time = time.time()
 
     def Run(self):
 
@@ -102,14 +78,17 @@ class Swarm_Simulation:
             self.Pn = self.P
 
             if self.state == 'A':
+                
                 sim.A_weights()
-                print 0.5*V.sum()
+                
             elif self.state == 'B':
-                print 0.5*V.sum()
+                
                 sim.B_weights()
+                
             elif self.state == 'C':
+                
                 sim.C_weights()
-                print 0.5*V.sum()
+
 
             
             for i in range(N):
@@ -133,12 +112,15 @@ class Swarm_Simulation:
 
     def states(self):
 
-        if 0.5*V.sum() < 100 and self.state == 'A':
+        if 0.5*V.sum() < 500 and self.state == 'A':
             self.state = 'B'
-        elif 0.5*V.sum() < 100 and self.state == 'B':
+            print time.time() - self.start_time
+            
+        elif 0.5*V.sum() < 500 and self.state == 'B':
             self.state = 'C'
-        #elif 0.5*V.sum() < 100 and self.state == 'C':
-            #print self.state
+        elif 0.5*V.sum() < 500 and self.state == 'C':
+            self.state = 'A'
+            print self.state
         
             
 
@@ -245,20 +227,22 @@ class Swarm_Simulation:
                         
                 else:
 
-                        if np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) < self.min*self.a:
-                            self.a += 0.5
-                            if self.a > 3:
-                                self.a = 3
+                    
+                        if np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) < self.min*self.a[i]:
+                            self.a[i] += random.random()
+                            if self.a[i] > 4:
+                                self.a[i] = 4
                             pygame.draw.aaline(self.screen, red, self.P[:, i], self.P[:, j], 1)
-                            W[i, j] = K * (1 -  5*self.min*self.a / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
-                            V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 5*self.min*self.a) ** 2
+                            W[i, j] = K * (1 -  self.min*self.a[i] / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
+                            V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - self.min*self.a[i]) ** 2
                             
                         else:
                             W[i, j] = 0
                             V[i,j] = 0
-                            self.a -= 0.001
-                            if self.a < 1.0:
-                                self.a = 1.0
+                            self.a[i] -= random.random()*0.1
+                            if self.a[i] < 1.0:
+                                self.a[i] = 1.0
+                            
                                 
             
     def C_weights(self):
@@ -281,40 +265,41 @@ class Swarm_Simulation:
 
                     W[i, j] = K * (1 - 3*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
                     V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 3*self.min) ** 2
-                    if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
+                    #if connections:
+                        #pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
                         
                 elif ((i == 0) and (j == 3)) or ((i == 7) and (j == 4)) or ((i == 3) and (j == 0)) or ((i == 4) and (j == 7)):
 
                     W[i, j] = K * (1 - 2.23*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
                     V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 2.23*self.min) ** 2
-                    if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
+                    #if connections:
+                        #pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
                         
                 elif ((i == 0) and (j == 5)) or ((i == 7) and (j == 2)) or ((i == 5) and (j == 0)) or ((i == 2) and (j == 7)):
 
                     W[i, j] = K * (1 - 3.60*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
                     V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 3.60*self.min) ** 2
 
-                    if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
+                    #if connections:
+                        #pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
                 else:
 
-                        if np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) < self.min*self.a:
-                            self.a += 0.5
-                            if self.a > 3:
-                                self.a = 3
+                    
+                        if np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) < self.min*self.a[i]:
+                            self.a[i] += random.random()
+                            if self.a[i] > 4:
+                                self.a[i] = 4
                             pygame.draw.aaline(self.screen, red, self.P[:, i], self.P[:, j], 1)
-                            W[i, j] = K * (1 -  5*self.min*self.a / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
-                            V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 5*self.min*self.a) ** 2
+                            W[i, j] = K * (1 -  self.min*self.a[i] / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
+                            V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - self.min*self.a[i]) ** 2
                             
                         else:
                             W[i, j] = 0
                             V[i,j] = 0
-                            self.a -= 0.001
-                            if self.a < 1.0:
-                                self.a = 1.0
-                    
+                            self.a[i] -= random.random()*0.1
+                            if self.a[i] < 1.0:
+                                self.a[i] = 1.0
+                            
                     
                     
         
@@ -340,8 +325,8 @@ class Swarm_Simulation:
                         
                     W[i, j] = K * (1 - 1.73*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
                     V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 1.73 * self.min) ** 2
-                    if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
+                    #if connections:
+                        #pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
 
                 elif (i == 1) and ((j == 0) or(j == 2) or (j == 3) or (j == 4)):
                         
@@ -375,8 +360,8 @@ class Swarm_Simulation:
 
                     W[i, j] = K * (1 - 1.73*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
                     V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 1.73 * self.min) ** 2
-                    if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
+                    #if connections:
+                        #pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
                 
                 elif (i == 5) and ((j == 2) or(j == 4) or (j == 7)):
                     W[i, j] = K * (1 - self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
@@ -394,8 +379,8 @@ class Swarm_Simulation:
                 elif (i == 6) and (j == 7):
                     W[i, j] = K * (1 - 3*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
                     V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 3 * self.min) ** 2
-                    if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)   
+                    #if connections:
+                        #pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)   
 
                 elif (i == 7) and (j == 5):
 
@@ -407,25 +392,25 @@ class Swarm_Simulation:
                 elif (i == 7) and (j == 6):
                     W[i, j] = K * (1 - 3*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
                     V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 3 * self.min) ** 2
-                    if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
+                    #if connections:
+                        #pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
 
                 else:
                     
-                        if np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) < self.min*self.a:
-                            self.a += 0.5
-                            if self.a > 3:
-                                self.a = 3
+                        if np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) < self.min*self.a[i]:
+                            self.a[i] += random.random()
+                            if self.a[i] > 4:
+                                self.a[i] = 4
                             pygame.draw.aaline(self.screen, red, self.P[:, i], self.P[:, j], 1)
-                            W[i, j] = K * (1 -  5*self.min*self.a / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
-                            V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 5*self.min*self.a) ** 2
+                            W[i, j] = K * (1 -  self.min*self.a[i] / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
+                            V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - self.min*self.a[i]) ** 2
                             
                         else:
                             W[i, j] = 0
                             V[i,j] = 0
-                            self.a -= 0.001
-                            if self.a < 1.0:
-                                self.a = 1.0
+                            self.a[i] -= random.random()*0.1
+                            if self.a[i] < 1.0:
+                                self.a[i] = 1.0
                             
 
                             
