@@ -228,7 +228,7 @@ class Swarm_Simulation:
                         if np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) < ((N*self.a)/(self.b))*self.min:
 
                             #If the energy is falling, non-connected bots are connected.
-                            if (self.delta_V < 0):
+                            if (self.delta_V < -100):
                                 if connections:
                                     pygame.draw.aaline(self.screen, red, self.P[:, i], self.P[:, j], 1)
                                 W[i, j] = K * (1 -  ((N*self.a)/(self.b))*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
@@ -249,16 +249,9 @@ class Swarm_Simulation:
                                     self.a += 1
 
                                     #Space multiplier is capped
-                                    if self.a > 4:
+                                    if self.a > 6:
                                         self.a = 1
-                                        self.finish += 1
-                                        if self.finish > 4:
-                                            plt.plot(E)
-                                            plt.ylabel('Total Energy')
-                                            plt.xlabel('Time Steps')
-                                            #plt.title('Rendezvous')
-                                            plt.ticklabel_format(style='sci',axis='y',scilimits=(0,0))
-                                            plt.show()
+
                                 
                                 W[i, j] = 0
                                 V[i, j] = 0

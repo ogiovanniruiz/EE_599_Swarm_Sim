@@ -25,7 +25,7 @@ connections = True
 
 N = 8 #Number of Robots
 O = 8 #number of obstacles
-bot_radius = 3
+bot_radius = 10
 obj_radius = 10
 Dim = 2  #Dimension of search space
 
@@ -59,7 +59,11 @@ class Swarm_Simulation:
 
         self.delta_V = 0 # Change in energy of the system in one program loop.
 
-        self.a = np.ones((N), dtype=np.float) #Spacer multiplier.
+        self.a = 1.0 #Spacer multiplier.
+
+        self.b = 1.0
+
+        self.counter = 0
 
         self.state = 'A'
 
@@ -101,9 +105,12 @@ class Swarm_Simulation:
                         pygame.draw.circle(self.screen, black, [int(self.Pn[0, i]), int(self.Pn[1, i])], bot_radius, 1)
 
                         self.delta_V = int(0.5*V.sum() - self.V_prev)
+
+                        
                         
             self.P = self.Pn
 
+            print 0.5*V.sum()
             pygame.display.update()
                    
             pygame.event.clear()
@@ -112,17 +119,153 @@ class Swarm_Simulation:
 
     def states(self):
 
-        if 0.5*V.sum() < 500 and self.state == 'A':
+        if 0.5*V.sum() < 2000 and self.state == 'A':
             self.state = 'B'
-            print time.time() - self.start_time
-            
-        elif 0.5*V.sum() < 500 and self.state == 'B':
+
+        elif 0.5*V.sum() < 2000 and self.state == 'B':
             self.state = 'C'
-        elif 0.5*V.sum() < 500 and self.state == 'C':
+
+        elif 0.5*V.sum() < 2000 and self.state == 'C':
             self.state = 'A'
-            print self.state
-        
+
+
+
+    def A_weights(self):
+
+        # The following Configures the Weighted Adjacency Matrix:
+        for i in range(N):
+            for j in range(N):
+
+                if (i == j):
+                    
+                    W[i, j] = 0
+                    V[i,j] = 0 
+                    
+                elif (i == 0) and ((j == 2) or (j == 1)):
+           
+                    W[i, j] = K * (1 - self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
+                    V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - self.min) ** 2
+                    if connections:
+                        pygame.draw.aaline(self.screen, blue, self.P[:, i], self.P[:, j], 1)
+
+                elif (i == 0) and (j == 4):
+                        
+                    W[i, j] = K * (1 - 1.73*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
+                    V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 1.73 * self.min) ** 2
+
+
+                elif (i == 1) and ((j == 0) or(j == 2) or (j == 3) or (j == 4)):
+                        
+                    W[i, j] = K * (1 - self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
+                    V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - self.min) ** 2
+                    if connections:
+                        pygame.draw.aaline(self.screen, blue, self.P[:, i], self.P[:, j], 1)
+
+                    if (i == 1) and ((j == 4) or (j == 2)):
+                        pygame.draw.aaline(self.screen, white, self.P[:, i], self.P[:, j], 2)
+
+                elif (i == 2) and ((j == 0) or (j == 1) or (j == 4) or (j == 5)):
+
+                    W[i, j] = K * (1 - self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
+                    V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - self.min) ** 2
+                    if connections:
+                        pygame.draw.aaline(self.screen, blue, self.P[:, i], self.P[:, j], 1)
+
+                    if (i == 2) and ((j == 4) or (j == 1)):
+                        pygame.draw.aaline(self.screen, white, self.P[:, i], self.P[:, j], 2)
+                        
+                elif (i == 3)and ((j == 1) or (j == 4) or (j == 6)):
+
+                    W[i, j] = K * (1 - self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
+                    V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - self.min) ** 2
+                    if connections:
+                        pygame.draw.aaline(self.screen, blue, self.P[:, i], self.P[:, j], 1)
+                        
+                elif (i == 4) and ((j == 1) or(j == 2) or (j == 3) or (j == 5)):
+
+                    W[i, j] = K * (1 - self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
+                    V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - self.min) ** 2
+                    if connections:
+                        pygame.draw.aaline(self.screen, blue, self.P[:, i], self.P[:, j], 1)
+
+                    if (i == 4) and ((j == 1) or (j == 2)):
+                        pygame.draw.aaline(self.screen, white, self.P[:, i], self.P[:, j], 2)
+
+                elif (i == 4) and (j == 0):
+
+                    W[i, j] = K * (1 - 1.73*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
+                    V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 1.73 * self.min) ** 2
+
+                
+                elif (i == 5) and ((j == 2) or(j == 4) or (j == 7)):
+                    W[i, j] = K * (1 - self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
+                    V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - self.min) ** 2
+                    if connections:
+                        pygame.draw.aaline(self.screen, blue, self.P[:, i], self.P[:, j], 1)
             
+
+                elif (i == 6) and (j == 3):
+                    W[i, j] = K * (1 - self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
+                    V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - self.min) ** 2
+                    if connections:
+                        pygame.draw.aaline(self.screen, blue, self.P[:, i], self.P[:, j], 1)
+
+                elif (i == 6) and (j == 7):
+                    W[i, j] = K * (1 - 3*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
+                    V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 3 * self.min) ** 2
+
+                elif (i == 7) and (j == 5):
+
+                    W[i, j] = K * (1 - self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
+                    V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - self.min) ** 2
+                    if connections:
+                        pygame.draw.aaline(self.screen, blue, self.P[:, i], self.P[:, j], 1)
+
+                elif (i == 7) and (j == 6):
+                    W[i, j] = K * (1 - 3*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
+                    V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 3 * self.min) ** 2
+
+                else:
+                    
+                        #Non connected bots that get close together considered here.
+                        if np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) < ((N*self.a)/(self.b))*self.min:
+
+                            #If the energy is falling, non-connected bots are connected.
+                            if (self.delta_V < -1000):
+                                if connections:
+                                    pygame.draw.aaline(self.screen, red, self.P[:, i], self.P[:, j], 1)
+                                W[i, j] = K * (1 -  ((N*self.a)/(self.b))*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
+                                V[i, j] = 0.5 * K * (np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - ((N*self.a)/(self.b))* self.min) ** 2
+                                A[i,j] = -1
+
+
+                            #if the energy increases the spacing between bots decreases and a counter is increased.
+                            else:
+                            
+                                self.b += 0.01
+                                self.counter += 1
+
+                                #If the counter hits a threshold, the counter and spacing divider is reset and the spacing multiplier increaes.
+                                if self.counter > 1500:
+                                    self.b = 1.0
+                                    self.counter = 0
+                                    self.a += 1
+
+                                    #Space multiplier is capped
+                                    if self.a > 4:
+                                        self.a = 1
+                                
+                                W[i, j] = 0
+                                V[i, j] = 0
+                                A[i,j] = -1
+
+                                
+                        # Non-connected bots that are not close together stay unconnected
+                        else:
+                            W[i, j] = 0
+                            V[i, j] = 0
+                            A[i,j] = -1
+                            
 
     def B_weights(self):
 
@@ -138,110 +281,138 @@ class Swarm_Simulation:
                     W[i, j] = K * (1 - 2*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j])) 
                     V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 2*self.min) ** 2
                     if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
+                        pygame.draw.aaline(self.screen, blue, self.P[:, i], self.P[:, j], 1)
 
                 elif (i == 0) and (j == 2):
 
                     W[i, j] = K * (1 - self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
                     V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - self.min) ** 2
                     if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
+                        pygame.draw.aaline(self.screen, blue, self.P[:, i], self.P[:, j], 1)
 
                 elif (i == 1) and (j == 2):
-                    W[i, j] = K * (1 - 1.73*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
-                    V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 1.73*self.min) ** 2
-                    if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
+                    W[i, j] = K * (1 - 1.73 * self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
+                    V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 1.73 * self.min) ** 2
+                    #if connections:
+                        #pygame.draw.aaline(self.screen, blue, self.P[:, i], self.P[:, j], 1)
 
                 elif (i == 1) and ((j == 3) or (j == 4) or (j == 0)):
                     W[i, j] = K * (1 - 2*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
                     V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 2*self.min) ** 2
                     if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
+                        pygame.draw.aaline(self.screen, blue, self.P[:, i], self.P[:, j], 1)
+
+                    if (i == 1) and ((j == 1)):
+                        pygame.draw.aaline(self.screen, white, self.P[:, i], self.P[:, j], 2)
                         
                 elif (i == 2) and ((j == 0) or (j == 3)):
                     W[i, j] = K * (1 - self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
                     V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - self.min) ** 2
-                    if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
+                    #if connections:
+                        #pygame.draw.aaline(self.screen, blue, self.P[:, i], self.P[:, j], 1)
                         
                 elif (i == 2) and (j == 1):
                     W[i, j] = K * (1 - 1.73*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
                     V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 1.73*self.min) ** 2
-                    if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
+                    #if connections:
+                        #pygame.draw.aaline(self.screen, blue, self.P[:, i], self.P[:, j], 1)
 
                 elif (i == 3) and ((j == 1) or (j == 4)):
                    
                     W[i, j] = K * (1 - 2*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
                     V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 2*self.min) ** 2
                     if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
+                        pygame.draw.aaline(self.screen, blue, self.P[:, i], self.P[:, j], 1)
                         
                 elif (i == 3) and ((j == 2) or (j == 5)):
                    
                     W[i, j] = K * (1 - self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
                     V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - self.min) ** 2
                     if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
+                        pygame.draw.aaline(self.screen, blue, self.P[:, i], self.P[:, j], 1)
                         
                 elif (i == 4) and ((j == 1) or (j == 3) or (j == 6)):
                    
                     W[i, j] = K * (1 - 2*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
                     V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 2*self.min) ** 2
                     if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
+                        pygame.draw.aaline(self.screen, blue, self.P[:, i], self.P[:, j], 1)
+
+                    if (i == 4) and ((j == 1)):
+                        pygame.draw.aaline(self.screen, white, self.P[:, i], self.P[:, j], 2)
                         
                 elif (i == 4) and (j == 5):
                     W[i, j] = K * (1 - 1.73*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
                     V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 1.73*self.min) ** 2
-                    if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
+                    #if connections:
+                        #pygame.draw.aaline(self.screen, blue, self.P[:, i], self.P[:, j], 1)
                         
                 elif (i == 5) and (j == 4):
                     W[i, j] = K * (1 - 1.73*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
                     V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 1.73*self.min) ** 2
-                    if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
+                    #if connections:
+                        #pygame.draw.aaline(self.screen, blue, self.P[:, i], self.P[:, j], 1)
                         
                 elif (i == 5) and ((j == 3) or (j == 6)):
                    
                     W[i, j] = K * (1 - self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
                     V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - self.min) ** 2
                     if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
+                        pygame.draw.aaline(self.screen, blue, self.P[:, i], self.P[:, j], 1)
                         
                 elif (i == 6) and (j == 5):
                    
                     W[i, j] = K * (1 - self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
                     V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - self.min) ** 2
-                    if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
+                    #if connections:
+                        #pygame.draw.aaline(self.screen, blue, self.P[:, i], self.P[:, j], 1)
                         
                 elif (i == 6) and (j == 4):
                    
                     W[i, j] = K * (1 - 2*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
                     V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 2*self.min) ** 2
-                    if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
+                    #if connections:
+                        #pygame.draw.aaline(self.screen, blue, self.P[:, i], self.P[:, j], 1)
                         
                 else:
 
-                    
-                        if np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) < self.min*self.a[i]:
-                            self.a[i] += random.random()
-                            if self.a[i] > 4:
-                                self.a[i] = 4
-                            pygame.draw.aaline(self.screen, red, self.P[:, i], self.P[:, j], 1)
-                            W[i, j] = K * (1 -  self.min*self.a[i] / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
-                            V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - self.min*self.a[i]) ** 2
+                        #Non connected bots that get close together considered here.
+                        if np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) < ((N*self.a)/(self.b))*self.min:
+
+                            #If the energy is falling, non-connected bots are connected.
+                            if (self.delta_V < -1000):
+                                if connections:
+                                    pygame.draw.aaline(self.screen, red, self.P[:, i], self.P[:, j], 1)
+                                W[i, j] = K * (1 -  ((N*self.a)/(self.b))*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
+                                V[i, j] = 0.5 * K * (np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - ((N*self.a)/(self.b))* self.min) ** 2
+                                A[i,j] = -1
+
+                            #if the energy increases the spacing between bots decreases and a counter is increased.
+                            else:
                             
+                                self.b += 0.01
+                                self.counter += 1
+
+                                #If the counter hits a threshold, the counter and spacing divider is reset and the spacing multiplier increaes.
+                                if self.counter > 500:
+                                    self.b = 1.0
+                                    self.counter = 0
+                                    self.a += 1
+
+                                    #Space multiplier is capped
+                                    if self.a > 6:
+                                        self.a = 1
+                                
+                                W[i, j] = 0
+                                V[i, j] = 0
+                                A[i,j] = -1
+
+                                
+                        # Non-connected bots that are not close together stay unconnected
                         else:
                             W[i, j] = 0
-                            V[i,j] = 0
-                            self.a[i] -= random.random()*0.1
-                            if self.a[i] < 1.0:
-                                self.a[i] = 1.0
+                            V[i, j] = 0
+                            A[i,j] = -1
                             
                                 
             
@@ -259,164 +430,71 @@ class Swarm_Simulation:
                     V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - self.min) ** 2
 
                     if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
+                        pygame.draw.aaline(self.screen, blue, self.P[:, i], self.P[:, j], 1)
 
-                elif ((i == 0) and (j == 7)) or ((i == 1) and (j == 6)) or ((i == 7) and (j == 0)) or ((i == 6) and (j == 1)):
+                elif ((i == 0) and (j == 7)) or ((i == 7) and (j == 0)):
 
+                    W[i, j] = K * (1 - 2*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
+                    V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 2*self.min) ** 2
+
+                elif ((i == 1) and (j == 6)) or ((i == 6) and (j == 1)):
                     W[i, j] = K * (1 - 3*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
                     V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 3*self.min) ** 2
-                    #if connections:
-                        #pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
-                        
+                    
                 elif ((i == 0) and (j == 3)) or ((i == 7) and (j == 4)) or ((i == 3) and (j == 0)) or ((i == 4) and (j == 7)):
 
                     W[i, j] = K * (1 - 2.23*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
                     V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 2.23*self.min) ** 2
-                    #if connections:
-                        #pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
+
                         
                 elif ((i == 0) and (j == 5)) or ((i == 7) and (j == 2)) or ((i == 5) and (j == 0)) or ((i == 2) and (j == 7)):
 
                     W[i, j] = K * (1 - 3.60*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
                     V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 3.60*self.min) ** 2
 
-                    #if connections:
-                        #pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
                 else:
 
                     
-                        if np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) < self.min*self.a[i]:
-                            self.a[i] += random.random()
-                            if self.a[i] > 4:
-                                self.a[i] = 4
-                            pygame.draw.aaline(self.screen, red, self.P[:, i], self.P[:, j], 1)
-                            W[i, j] = K * (1 -  self.min*self.a[i] / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
-                            V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - self.min*self.a[i]) ** 2
+                        #Non connected bots that get close together considered here.
+                        if np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) < ((N*self.a)/(self.b))*self.min:
+
+                            #If the energy is falling, non-connected bots are connected.
+                            if (self.delta_V < -1000):
+                                if connections:
+                                    pygame.draw.aaline(self.screen, red, self.P[:, i], self.P[:, j], 1)
+                                W[i, j] = K * (1 -  ((N*self.a)/(self.b))*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
+                                V[i, j] = 0.5 * K * (np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - ((N*self.a)/(self.b))* self.min) ** 2
+                                A[i,j] = -1
+
+
+                            #if the energy increases the spacing between bots decreases and a counter is increased.
+                            else:
                             
+                                self.b += 0.01
+                                self.counter += 1
+
+                                #If the counter hits a threshold, the counter and spacing divider is reset and the spacing multiplier increaes.
+                                if self.counter > 1500:
+                                    self.b = 1.0
+                                    self.counter = 0
+                                    self.a += 0.5
+
+                                    #Space multiplier is capped
+                                    if self.a > 6:
+                                        self.a = 1
+                                
+                                W[i, j] = 0
+                                V[i, j] = 0
+                                A[i,j] = -1
+
+                                
+                        # Non-connected bots that are not close together stay unconnected
                         else:
                             W[i, j] = 0
-                            V[i,j] = 0
-                            self.a[i] -= random.random()*0.1
-                            if self.a[i] < 1.0:
-                                self.a[i] = 1.0
+                            V[i, j] = 0
+                            A[i,j] = -1
                             
-                    
-                    
-        
-    def A_weights(self):
-
-        # The following Configures the Weighted Adjacency Matrix:
-        for i in range(N):
-            for j in range(N):
-
-                if (i == j):
-                    
-                    W[i, j] = 0
-                    V[i,j] = 0 
-                    
-                elif (i == 0) and ((j == 2) or (j == 1)):
-           
-                    W[i, j] = K * (1 - self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
-                    V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - self.min) ** 2
-                    if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
-
-                elif (i == 0) and (j == 4):
-                        
-                    W[i, j] = K * (1 - 1.73*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
-                    V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 1.73 * self.min) ** 2
-                    #if connections:
-                        #pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
-
-                elif (i == 1) and ((j == 0) or(j == 2) or (j == 3) or (j == 4)):
-                        
-                    W[i, j] = K * (1 - self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
-                    V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - self.min) ** 2
-                    if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
-
-                elif (i == 2) and ((j == 0) or(j == 1) or (j == 4) or (j == 5)):
-
-                    W[i, j] = K * (1 - self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
-                    V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - self.min) ** 2
-                    if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
-                        
-                elif (i == 3)and ((j == 1) or(j == 4) or (j == 6)):
-
-                    W[i, j] = K * (1 - self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
-                    V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - self.min) ** 2
-                    if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
-                        
-                elif (i == 4) and ((j == 1) or(j == 2) or (j == 3) or (j == 5)):
-
-                    W[i, j] = K * (1 - self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
-                    V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - self.min) ** 2
-                    if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
-
-                elif (i == 4) and (j == 0):
-
-                    W[i, j] = K * (1 - 1.73*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
-                    V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 1.73 * self.min) ** 2
-                    #if connections:
-                        #pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
-                
-                elif (i == 5) and ((j == 2) or(j == 4) or (j == 7)):
-                    W[i, j] = K * (1 - self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
-                    V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - self.min) ** 2
-                    if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
-            
-
-                elif (i == 6) and (j == 3):
-                    W[i, j] = K * (1 - self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
-                    V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - self.min) ** 2
-                    if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
-
-                elif (i == 6) and (j == 7):
-                    W[i, j] = K * (1 - 3*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
-                    V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 3 * self.min) ** 2
-                    #if connections:
-                        #pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)   
-
-                elif (i == 7) and (j == 5):
-
-                    W[i, j] = K * (1 - self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
-                    V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - self.min) ** 2
-                    if connections:
-                        pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
-
-                elif (i == 7) and (j == 6):
-                    W[i, j] = K * (1 - 3*self.min / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
-                    V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - 3 * self.min) ** 2
-                    #if connections:
-                        #pygame.draw.aaline(self.screen, black, self.P[:, i], self.P[:, j], 1)
-
-                else:
-                    
-                        if np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) < self.min*self.a[i]:
-                            self.a[i] += random.random()
-                            if self.a[i] > 4:
-                                self.a[i] = 4
-                            pygame.draw.aaline(self.screen, red, self.P[:, i], self.P[:, j], 1)
-                            W[i, j] = K * (1 -  self.min*self.a[i] / np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]))
-                            V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - self.min*self.a[i]) ** 2
-                            
-                        else:
-                            W[i, j] = 0
-                            V[i,j] = 0
-                            self.a[i] -= random.random()*0.1
-                            if self.a[i] < 1.0:
-                                self.a[i] = 1.0
-                            
-
-                            
-
-
-            
+                           
     
 if __name__ == '__main__':
     
