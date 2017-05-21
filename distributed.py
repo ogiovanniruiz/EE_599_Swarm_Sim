@@ -27,7 +27,7 @@ connections = True
 
 N = 8 #Number of Robots
 O = N #number of obstacles
-bot_radius = 3
+bot_radius = 10
 obj_radius = 10
 Dim = 2  #Dimension of search space
 count = 0
@@ -51,7 +51,7 @@ t_converge = []
 t_static = []
 t_dynamic = []
 
-converge = open ('converge.csv', 'a')
+converge = open ('converge_dist.csv', 'w')
 writer_converge = csv.writer(converge)
 
 static = open ('static.csv', 'a')
