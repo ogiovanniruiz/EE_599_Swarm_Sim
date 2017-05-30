@@ -1,5 +1,7 @@
 import pygame
 
+import matplotlib.lines as mlines
+
 from pygame.locals import *
 
 import numpy as np
@@ -25,9 +27,9 @@ SCREENSIZE = [800, 800]  # Size of our output display
 running = True
 connections = True
 
-N = 8 #Number of Robots
+N = 6 #Number of Robots
 O = N #number of obstacles
-bot_radius = 10
+bot_radius = 15
 obj_radius = 10
 Dim = 2  #Dimension of search space
 
@@ -41,7 +43,11 @@ K = 500
 K_obj = 500
 
 E_converge = []
+cm0_converge = []
+cm1_converge = []
+cm2_converge = []
 E_static = []
+mse_static = []
 E_dynamic = []
 
 t_converge = []
@@ -114,6 +120,12 @@ class Swarm_Simulation:
 
         self.time_2 = 0
 
+        self.cm = np.zeros((Dim), dtype=np.float)
+
+        self.dist_cm = np.zeros((N), dtype=np.float)
+
+        self.mse = 0
+
     def Run(self):
 
         while(running):
@@ -136,10 +148,15 @@ class Swarm_Simulation:
                 for j in range(N):
 
                         # Bot positions are updated.
-                        self.Pn[:, i] = self.Pn[:, i] + (self.P[:, j] - self.P[:, i]) * 0.00001 * W[i,j] + self.move * (self.target[:] - self.P[:,self.minimum]) * 0.0005 + (self.O[:,j] - self.Pn[:,i])* w_obj[i,j] *0.001
+                        self.Pn[:, i] = self.Pn[:, i] + (self.P[:, j] - self.P[:, i]) *0.00001 * W[i,j] + self.move * (self.target[:] - self.P[:,self.minimum]) * 0.0005 + (self.O[:,j] - self.Pn[:,i])* w_obj[i,j] *0.001
 
                         self.O[1, i] = self.O[1,i] + self.obstacle_speeds * (random.random() - 0.5)
-                        
+
+                        self.cm[:] = [self.Pn[0].sum()/N, self.Pn[1].sum()/N]
+
+                        self.dist_cm[i] = np.linalg.norm(self.Pn[:, i] - self.cm)
+
+                        self.mse = ((np.linalg.norm(self.Pn[:, 0] - self.Pn[:, 1]) - self.min)**2 + (np.linalg.norm(self.Pn[:, 1] - self.Pn[:, 2]) - self.min)**2 +(np.linalg.norm(self.Pn[:, 2] - self.Pn[:, 3]) - self.min) ** 2 +(np.linalg.norm(self.Pn[:, 3] - self.Pn[:, 4]) - self.min) ** 2 +(np.linalg.norm(self.Pn[:, 4] - self.Pn[:, 5]) - self.min) ** 2 +(np.linalg.norm(self.Pn[:, 5] - self.Pn[:, 0]) - self.min) ** 2)/N
 
                         if self.dynamic_obstacles:
                             
@@ -149,13 +166,15 @@ class Swarm_Simulation:
 
                             elif self.O[1,i] < 0:
 
-                                self.obstacle_speeds =  1.0
+                                self.obstacle_speeds = 1.0
                         else:
 
                             self.obstacle_speeds = 0
                             
                         # Bots are drawn
                         pygame.draw.circle(self.screen, black, [int(self.Pn[0, i]), int(self.Pn[1, i])], bot_radius, 1)
+
+                        pygame.draw.circle(self.screen, black, [int(self.cm[0]), int(self.cm[1])], bot_radius, 1)
 
                         self.delta_V = int(0.5*V.sum() - self.V_prev)
                         
@@ -175,14 +194,22 @@ class Swarm_Simulation:
 
             if self.state == 0:
                 E_converge.append(0.5*V.sum())
+                cm0_converge.append(abs(self.dist_cm[0]/100 - .29))
+                cm1_converge.append(abs(self.dist_cm[1]/100 - .29))
+                cm2_converge.append(abs(self.dist_cm[2]/100 - .29))
+                print self.dist_cm[0]
                 t_converge.append(time.time() - self.time_0)
             elif self.state == 2:
                 E_static.append(0.5*V.sum())
+                mse_static.append(self.mse/100)
                 t_static.append(time.time() - self.time_1)
 
             elif self.state == 3:
                 E_dynamic.append(0.5*V.sum())
                 t_dynamic.append(time.time() - self.time_2)
+
+
+            #time.sleep(0.5)
                    
             pygame.event.clear()
 
@@ -275,29 +302,42 @@ class Swarm_Simulation:
 
             
             #TEST 1 Convergence to any point:
-            if (0.5*V.sum() < 15000 and self.state == 0):
+            if (0.5*V.sum() < 1 and self.state == 0):
                 
                 self.state = 1
                 self.target = [SCREENSIZE[0] * 0.75, SCREENSIZE[1]*0.5]
                 for i in range(N):
                     self.O[:,i] = [SCREENSIZE[0]/2, 100*i]
 
-                array_converge = [t_converge,E_converge]
-                for values in array_converge:
-                    writer_converge.writerow(values)
+                #t_converge = np.arange(0., 5., 0.2)
+
+                plt.plot(t_converge, cm0_converge, 'k--', label='Robot 1')
+                plt.plot(t_converge, cm1_converge, 'ks', label='Robot 2')
+                plt.plot(t_converge, cm2_converge, 'k^', label='Robot 3')
+                plt.ylabel('Error in Distance to Center of Mass (Unit Distance)')
+                plt.xlabel('Process Time (s)')
+                #bot0 = mlines.Line2D([], [], color='k', marker='^',
+                                          #markersize=15, label='Robot 1')
+                plt.legend()
+                plt.show()
+
+                #array_converge = [t_converge,E_converge]
+                #for values in array_converge:
+                    #writer_converge.writerow(values)
 
             elif (np.linalg.norm(self.target[:] - self.Pn[:, self.minimum]) <= 25 and self.state == 1):
 
                 self.state = 2
-                self.target = [SCREENSIZE[0] * 0.05, SCREENSIZE[1]*0.5]
+                self.target = [SCREENSIZE[0] * 0.2, SCREENSIZE[1]*0.5]
 
                 for i in range(N):
-                    self.O[:,i] = [SCREENSIZE[0]*0.4, 100*i - SCREENSIZE[1]*0.2]
+                    self.O[:,i] = [SCREENSIZE[0]*0.4, 100*i - SCREENSIZE[1]*0.1]
 
-                for i in range(4):
+                for i in range(N/2):
                     self.O[:,i] = [SCREENSIZE[0]*0.6, 100*i + SCREENSIZE[1]*0.3]
 
                 self.time_1 = time.time()
+
 
             elif (np.linalg.norm(self.target[:] - self.Pn[:, self.minimum]) <= 25 and self.state == 2):
 
@@ -315,6 +355,11 @@ class Swarm_Simulation:
                     writer_static.writerow(values)
 
                 self.time_2 = time.time()
+
+                plt.plot(t_static, mse_static, 'k--', label='Robot 3')
+                plt.ylabel('MSE of target distances (Unit Distance Squared)')
+                plt.xlabel('Process Time (s)')
+                plt.show()
 
             elif (np.linalg.norm(self.target[:] - self.Pn[:, self.minimum]) <= 25 and self.state == 3):
 

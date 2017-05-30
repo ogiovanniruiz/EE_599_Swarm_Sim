@@ -35,11 +35,12 @@ count = 0
 W = np.zeros((N, N), dtype=np.float) # The Swarm Weights Matrix
 V = np.zeros((N, N), dtype=np.float) # The Swarm Energy Matrix
 A = np.zeros((N, N), dtype=np.float) # The Swarm Adjacency Matrix
+
 w_obj = np.zeros((N,O), dtype=np.float)
 v_obj = np.zeros((N,O), dtype=np.float)
 v_target = np.zeros((N), dtype=np.float)
 
-K = 500
+K = 5000
 
 K_obj = 5000
 
