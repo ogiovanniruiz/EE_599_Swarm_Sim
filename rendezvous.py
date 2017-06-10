@@ -27,9 +27,9 @@ SCREENSIZE = [800, 800]  # Size of our output display
 running = True
 connections = True
 
-N = 6 #Number of Robots
+N = 8 #Number of Robots
 O = N #number of obstacles
-bot_radius = 15
+bot_radius = 10
 obj_radius = 10
 Dim = 2  #Dimension of search space
 
@@ -174,7 +174,7 @@ class Swarm_Simulation:
                         # Bots are drawn
                         pygame.draw.circle(self.screen, black, [int(self.Pn[0, i]), int(self.Pn[1, i])], bot_radius, 1)
 
-                        pygame.draw.circle(self.screen, black, [int(self.cm[0]), int(self.cm[1])], bot_radius, 1)
+                        #pygame.draw.circle(self.screen, black, [int(self.cm[0]), int(self.cm[1])], bot_radius, 1)
 
                         self.delta_V = int(0.5*V.sum() - self.V_prev)
                         
@@ -197,7 +197,6 @@ class Swarm_Simulation:
                 cm0_converge.append(abs(self.dist_cm[0]/100 - .29))
                 cm1_converge.append(abs(self.dist_cm[1]/100 - .29))
                 cm2_converge.append(abs(self.dist_cm[2]/100 - .29))
-                print self.dist_cm[0]
                 t_converge.append(time.time() - self.time_0)
             elif self.state == 2:
                 E_static.append(0.5*V.sum())
@@ -302,7 +301,7 @@ class Swarm_Simulation:
 
             
             #TEST 1 Convergence to any point:
-            if (0.5*V.sum() < 1 and self.state == 0):
+            if (0.5*V.sum() < 1000 and self.state == 0):
                 
                 self.state = 1
                 self.target = [SCREENSIZE[0] * 0.75, SCREENSIZE[1]*0.5]
@@ -311,19 +310,19 @@ class Swarm_Simulation:
 
                 #t_converge = np.arange(0., 5., 0.2)
 
-                plt.plot(t_converge, cm0_converge, 'k--', label='Robot 1')
-                plt.plot(t_converge, cm1_converge, 'ks', label='Robot 2')
-                plt.plot(t_converge, cm2_converge, 'k^', label='Robot 3')
-                plt.ylabel('Error in Distance to Center of Mass (Unit Distance)')
-                plt.xlabel('Process Time (s)')
+                #plt.plot(t_converge, cm0_converge, 'k--', label='Robot 1')
+                #plt.plot(t_converge, cm1_converge, 'ks', label='Robot 2')
+                #plt.plot(t_converge, cm2_converge, 'k^', label='Robot 3')
+                #plt.ylabel('Error in Distance to Center of Mass (Unit Distance)')
+                #plt.xlabel('Process Time (s)')
                 #bot0 = mlines.Line2D([], [], color='k', marker='^',
                                           #markersize=15, label='Robot 1')
                 plt.legend()
                 plt.show()
 
-                #array_converge = [t_converge,E_converge]
-                #for values in array_converge:
-                    #writer_converge.writerow(values)
+                array_converge = [t_converge,E_converge]
+                for values in array_converge:
+                    writer_converge.writerow(values)
 
             elif (np.linalg.norm(self.target[:] - self.Pn[:, self.minimum]) <= 25 and self.state == 1):
 

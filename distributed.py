@@ -40,9 +40,9 @@ w_obj = np.zeros((N,O), dtype=np.float)
 v_obj = np.zeros((N,O), dtype=np.float)
 v_target = np.zeros((N), dtype=np.float)
 
-K = 5000
+K = 500
 
-K_obj = 5000
+K_obj = 500
 
 E_converge = []
 E_static = []
@@ -52,7 +52,7 @@ t_converge = []
 t_static = []
 t_dynamic = []
 
-converge = open ('converge_dist.csv', 'w')
+converge = open ('converge_dist.csv', 'a')
 writer_converge = csv.writer(converge)
 
 static = open ('static.csv', 'a')
@@ -268,6 +268,7 @@ class Swarm_Simulation:
                     V[i, j] = 0.5 * K *(np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) - C * self.min) ** 2
 
                 else:
+
                         #Non connected bots that get close together considered here.
                         if np.linalg.norm(self.Pn[:, i] - self.Pn[:, j]) < ((N*self.a)/(self.b))*self.min:
 
@@ -318,6 +319,7 @@ class Swarm_Simulation:
             self.minimum = int(np.where(self.dist_0 == self.dist_0.min())[0])
 
             #TEST 1 Convergence to any point:
+            print (0.5*V.sum())
             if (0.5*V.sum() < 15000 and self.state == 0):
                 
                 self.state = 1
